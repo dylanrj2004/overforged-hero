@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Overforged Hero</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10131a;
+      --panel: #191f2b;
+      --panel-2: #212939;
+      --ink: #f5f0df;
+      --muted: #aeb6c9;
+      --gold: #f2c14e;
+      --red: #f25f5c;
+      --green: #63d471;
+      --blue: #56cfe1;
+      --purple: #c77dff;
+      --line: rgba(255, 255, 255, .12);
+      --shadow: 0 22px 60px rgba(0, 0, 0, .35);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(199, 125, 255, .18), transparent 28rem),
+        radial-gradient(circle at 90% 10%, rgba(86, 207, 225, .14), transparent 28rem),
+        linear-gradient(135deg, #0f1118 0%, #151b25 52%, #0d1118 100%);
+      overflow-x: hidden;
+    }
+
+    button {
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 8px;
+      color: var(--ink);
+      background: linear-gradient(180deg, #303a50, #202737);
+      min-height: 42px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 10px 22px rgba(0,0,0,.18);
+      transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .46;
+    }
+
+    .app {
+      width: min(1220px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 20px 0 32px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: clamp(1.65rem, 4vw, 3.1rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .title p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      max-width: 54rem;
+    }
+
+    .resource-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 11px;
+      background: rgba(255, 255, 255, .06);
+      color: var(--muted);
+      font-size: .9rem;
+      white-space: nowrap;
+    }
+
+    .pill strong {
+      color: var(--ink);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(25, 31, 43, .9);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .battle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 410px;
+    }
+
+    .side {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 410px;
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .side.hero {
+      background: linear-gradient(160deg, rgba(86,207,225,.13), transparent 60%);
+      border-right: 1px solid var(--line);
+    }
+
+    .side.enemy {
+      background: linear-gradient(200deg, rgba(242,95,92,.13), transparent 60%);
+    }
+
+    .name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-weight: 900;
+    }
+
+    .sprite-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 210px;
+    }
+
+    .sprite {
+      position: relative;
+      width: min(190px, 44vw);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      transform-origin: center bottom;
+      animation: breathe 1.4s ease-in-out infinite;
+    }
+
+    .sprite.hit {
+      animation: hit .18s ease;
+    }
+
+    .body {
+      position: absolute;
+      width: 58%;
+      height: 64%;
+      bottom: 8%;
+      border-radius: 42% 42% 30% 30%;
+      background: linear-gradient(145deg, #5d6bff, #26326a);
+      border: 3px solid rgba(255,255,255,.28);
+      box-shadow: inset -16px -14px 0 rgba(0,0,0,.16);
+    }
+
+    .head {
+      position: absolute;
+      top: 9%;
+      width: 46%;
+      height: 42%;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffd6a5, #d9966b);
+      border: 3px solid rgba(255,255,255,.3);
+      z-index: 3;
+    }
+
+    .eye {
+      position: absolute;
+      top: 42%;
+      width: 8%;
+      height: 8%;
+      border-radius: 50%;
+      background: #151515;
+      z-index: 4;
+    }
+
+    .eye.left {
+      left: 39%;
+    }
+
+    .eye.right {
+      right: 39%;
+    }
+
+    .weapon {
+      position: absolute;
+      right: 4%;
+      top: 21%;
+      width: 18%;
+      height: 72%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #fff1a8, #f2c14e 45%, #9b6b16);
+      transform: rotate(-35deg);
+      z-index: 5;
+      box-shadow: 0 0 18px rgba(242,193,78,.28);
+    }
+
+    .shield {
+      position: absolute;
+      left: 7%;
+      top: 41%;
+      width: 28%;
+      height: 34%;
+      border-radius: 50% 50% 46% 46%;
+      background: linear-gradient(145deg, #56cfe1, #265f80);
+      border: 3px solid rgba(255,255,255,.28);
+      z-index: 5;
+    }
+
+    .enemy .body {
+      background: linear-gradient(145deg, #fb7185, #7f1d1d);
+    }
+
+    .enemy .head {
+      background: linear-gradient(145deg, #fca5a5, #991b1b);
+      border-radius: 45% 45% 55% 55%;
+    }
+
+    .enemy .weapon {
+      background: linear-gradient(90deg, #e5e7eb, #64748b);
+      box-shadow: none;
+    }
+
+    .boss .sprite {
+      filter: drop-shadow(0 0 28px rgba(242,95,92,.42));
+      transform: scale(1.1);
+    }
+
+    .boss .head,
+    .boss .body {
+      border-color: rgba(242,193,78,.65);
+    }
+
+    .bar {
+      overflow: hidden;
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .fill {
+      height: 100%;
+      width: 100%;
+      border-radius: inherit;
+      transition: width .18s ease;
+    }
+
+    .hp {
+      background: linear-gradient(90deg, #ef4444, #fb7185);
+    }
+
+    .xp {
+      background: linear-gradient(90deg, #56cfe1, #c77dff);
+    }
+
+    .meter-text {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 8px 0;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .primary {
+      background: linear-gradient(180deg, #f2c14e, #9b6b16);
+      color: #191306;
+      border-color: rgba(255, 243, 187, .45);
+    }
+
+    .danger {
+      background: linear-gradient(180deg, #ef4444, #86151b);
+    }
+
+    .success {
+      background: linear-gradient(180deg, #37b36f, #1d6b42);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 7px;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+    }
+
+    .tabs button {
+      min-height: 36px;
+      padding: 8px 10px;
+      white-space: nowrap;
+      background: rgba(255,255,255,.06);
+    }
+
+    .tabs button.active {
+      background: linear-gradient(180deg, #3c4862, #273044);
+      border-color: rgba(242,193,78,.45);
+      color: var(--gold);
+    }
+
+    .tab-panel {
+      display: none;
+      padding: 14px;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat, .item, .log-line {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.045);
+      padding: 10px;
+    }
+
+    .stat span, .cost, .small {
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 1.04rem;
+    }
+
+    .shop, .gear-list, .quest-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .item h3 {
+      margin: 0 0 4px;
+      font-size: .98rem;
+    }
+
+    .item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .gear-name {
+      color: var(--gold);
+      font-weight: 900;
+    }
+
+    .rarity-common { color: #e5e7eb; }
+    .rarity-rare { color: #56cfe1; }
+    .rarity-epic { color: #c77dff; }
+    .rarity-legendary { color: #f2c14e; }
+    .rarity-mythic { color: #ff6bcb; }
+
+    .log {
+      display: grid;
+      gap: 7px;
+      max-height: 230px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .log-line {
+      font-size: .88rem;
+      color: var(--muted);
+    }
+
+    .banner {
+      display: none;
+      position: fixed;
+      left: 50%;
+      top: 18%;
+      transform: translateX(-50%);
+      z-index: 10;
+      width: min(540px, calc(100vw - 24px));
+      border: 1px solid rgba(242,193,78,.55);
+      border-radius: 8px;
+      padding: 18px;
+      text-align: center;
+      background: rgba(20, 16, 12, .94);
+      box-shadow: var(--shadow);
+    }
+
+    .banner.show {
+      display: block;
+      animation: pop .6s ease both;
+    }
+
+    .banner strong {
+      display: block;
+      color: var(--gold);
+      font-size: 1.45rem;
+      margin-bottom: 4px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 12;
+      display: grid;
+      gap: 8px;
+      width: min(360px, calc(100vw - 32px));
+      pointer-events: none;
+    }
+
+    .toast div {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: rgba(25,31,43,.95);
+      box-shadow: var(--shadow);
+      color: var(--ink);
+      animation: slide .28s ease both;
+    }
+
+    .floating {
+      position: fixed;
+      z-index: 11;
+      color: var(--gold);
+      font-weight: 900;
+      pointer-events: none;
+      animation: floatUp .75s ease forwards;
+      text-shadow: 0 2px 8px rgba(0,0,0,.5);
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    @keyframes hit {
+      0% { transform: translateX(0) scale(1); filter: brightness(1); }
+      40% { transform: translateX(-8px) scale(1.03); filter: brightness(1.55); }
+      100% { transform: translateX(0) scale(1); filter: brightness(1); }
+    }
+
+    @keyframes pop {
+      0% { opacity: 0; transform: translateX(-50%) scale(.9); }
+      16%, 78% { opacity: 1; transform: translateX(-50%) scale(1); }
+      100% { opacity: 0; transform: translateX(-50%) scale(.98); }
+    }
+
+    @keyframes slide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatUp {
+      from { opacity: 0; transform: translateY(0) scale(.92); }
+      20% { opacity: 1; }
+      to { opacity: 0; transform: translateY(-54px) scale(1.08); }
+    }
+
+    @media (max-width: 900px) {
+      .topbar, .grid, .battle {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      .resource-row {
+        justify-content: flex-start;
+      }
+
+      .side.hero {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .side, .battle {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .actions, .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .item {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="banner" id="banner"></div>
+  <div class="toast" id="toast"></div>
+  <main class="app">
+    <section class="topbar">
+      <div class="title">
+        <h1>Overforged Hero</h1>
+        <p>Beat monsters, steal materials, forge ridiculous gear, and become carried by your own equipment.</p>
+      </div>
+      <div class="resource-row">
+        <div class="pill">Gold <strong id="gold">0</strong></div>
+        <div class="pill">Ore <strong id="ore">0</strong></div>
+        <div class="pill">Gems <strong id="gems">0</strong></div>
+        <div class="pill">Stage <strong id="stage">1</strong></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Battlefield</h2>
+          <span class="pill">Auto DPS <strong id="autoDps">0</strong></span>
+        </div>
+        <div class="battle">
+          <div class="side hero">
+            <div>
+              <div class="name">
+                <span id="heroTitle">Blacksmith Hero</span>
+                <span class="pill">Lv <strong id="level">1</strong></span>
+              </div>
+              <div class="meter-text"><span>Hero HP</span><span id="heroHpText">100 / 100</span></div>
+              <div class="bar"><div class="fill hp" id="heroHpBar"></div></div>
+              <div class="meter-text"><span>XP</span><span id="xpText">0 / 30</span></div>
+              <div class="bar"><div class="fill xp" id="xpBar"></div></div>
+            </div>
+            <div class="sprite-wrap">
+              <div class="sprite" id="heroSprite" aria-label="Hero">
+                <div class="weapon"></div>
+                <div class="shield"></div>
+                <div class="body"></div>
+                <div class="head"></div>
+                <div class="eye left"></div>
+                <div class="eye right"></div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" id="attackBtn">Strike</button>
+              <button id="skillBtn">Overforge</button>
+              <button class="success" id="potionBtn">Potion</button>
+            </div>
+          </div>
+
+          <div class="side enemy" id="enemySide">
+            <div>
+              <div class="name">
+                <span id="enemyName">Slime</span>
+                <span class="pill">Power <strong id="enemyPower">1</strong></span>
+              </div>
+              <div class="meter-text"><span>Enemy HP</span><span id="enemyHpText">30 / 30</span></div>
+              <div class="bar"><div class="fill hp" id="enemyHpBar"></div></div>
+              <div class="meter-text"><span id="enemyTrait">Trait: Squishy</span><span id="bossTag"></span></div>
+            </div>
+            <div class="sprite-wrap">
+              <div class="sprite" id="enemySprite" aria-label="Enemy">
+                <div class="weapon"></div>
+                <div class="body"></div>
+                <div class="head"></div>
+                <div class="eye left"></div>
+                <div class="eye right"></div>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="advanceBtn">Next Stage</button>
+              <button id="farmBtn">Farm Mode</button>
+              <button class="danger" id="resetBtn">Reset Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="tabs">
+          <button class="active" data-tab="statsTab">Stats</button>
+          <button data-tab="gearTab">Gear</button>
+          <button data-tab="forgeTab">Forge</button>
+          <button data-tab="questsTab">Quests</button>
+          <button data-tab="logTab">Log</button>
+        </div>
+
+        <div class="tab-panel active" id="statsTab">
+          <div class="stats">
+            <div class="stat"><span>Click Damage</span><strong id="clickDamage">0</strong></div>
+            <div class="stat"><span>Attack Speed</span><strong id="attackSpeed">0/s</strong></div>
+            <div class="stat"><span>Armor</span><strong id="armor">0</strong></div>
+            <div class="stat"><span>Crit Chance</span><strong id="crit">0%</strong></div>
+            <div class="stat"><span>Gold Bonus</span><strong id="goldBonus">0%</strong></div>
+            <div class="stat"><span>Luck</span><strong id="luck">0</strong></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="gearTab">
+          <div class="gear-list" id="gearList"></div>
+        </div>
+
+        <div class="tab-panel" id="forgeTab">
+          <div class="shop" id="shop"></div>
+        </div>
+
+        <div class="tab-panel" id="questsTab">
+          <div class="quest-list" id="quests"></div>
+        </div>
+
+        <div class="tab-panel" id="logTab">
+          <div class="log" id="log"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const saveKey = "overforgedHeroSave.v1";
+    const slots = ["weapon", "helmet", "chest", "gloves", "boots", "ring"];
+    const slotNames = {
+      weapon: "Weapon",
+      helmet: "Helmet",
+      chest: "Chestplate",
+      gloves: "Gauntlets",
+      boots: "Boots",
+      ring: "Ring"
+    };
+    const rarities = [
+      { name: "Common", class: "rarity-common", mult: 1, chance: 58 },
+      { name: "Rare", class: "rarity-rare", mult: 1.45, chance: 25 },
+      { name: "Epic", class: "rarity-epic", mult: 2.05, chance: 12 },
+      { name: "Legendary", class: "rarity-legendary", mult: 3.1, chance: 4 },
+      { name: "Mythic", class: "rarity-mythic", mult: 4.8, chance: 1 }
+    ];
+    const enemyBase = [
+      ["Training Slime", "Trait: Squishy"],
+      ["Rust Goblin", "Trait: Steals lunch money"],
+      ["Cave Brute", "Trait: Heavy hitter"],
+      ["Glass Witch", "Trait: High reward"],
+      ["Clockwork Knight", "Trait: Armored"],
+      ["Abyss Drake", "Trait: Boss energy"]
+    ];
+
+    const defaultState = () => ({
+      gold: 0,
+      ore: 0,
+      gems: 0,
+      stage: 1,
+      farm: false,
+      level: 1,
+      xp: 0,
+      kills: 0,
+      bossKills: 0,
+      potions: 3,
+      heroHp: 100,
+      upgrades: {
+        training: 0,
+        anvil: 0,
+        armor: 0,
+        luck: 0,
+        apprentice: 0
+      },
+      gear: Object.fromEntries(slots.map(slot => [slot, makeStarterGear(slot)])),
+      enemy: null,
+      overforgeCooldown: 0,
+      lastTick: Date.now()
+    });
+
+    let state = load();
+    if (!state.enemy) state.enemy = makeEnemy();
+    let dirty = false;
+
+    const $ = id => document.getElementById(id);
+    const fmt = num => {
+      if (num < 1000) return Math.floor(num).toString();
+      const units = ["K", "M", "B", "T"];
+      let value = num;
+      let i = -1;
+      while (value >= 1000 && i < units.length - 1) {
+        value /= 1000;
+        i++;
+      }
+      return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)}${units[i]}`;
+    };
+
+    function makeStarterGear(slot) {
+      return {
+        slot,
+        name: `Worn ${slotNames[slot]}`,
+        rarity: "Common",
+        rarityClass: "rarity-common",
+        level: 1,
+        dmg: slot === "weapon" ? 4 : 0,
+        hp: slot !== "weapon" ? 8 : 0,
+        armor: slot === "chest" ? 2 : 0,
+        crit: slot === "ring" ? 1 : 0,
+        gold: 0,
+        luck: 0
+      };
+    }
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(saveKey);
+        if (!raw) return defaultState();
+        const saved = JSON.parse(raw);
+        const merged = defaultState();
+        Object.assign(merged, saved);
+        merged.upgrades = { ...merged.upgrades, ...saved.upgrades };
+        merged.gear = { ...merged.gear, ...saved.gear };
+        return merged;
+      } catch {
+        return defaultState();
+      }
+    }
+
+    function save() {
+      localStorage.setItem(saveKey, JSON.stringify(state));
+      dirty = false;
+    }
+
+    function stats() {
+      const gear = Object.values(state.gear);
+      const gearDmg = gear.reduce((sum, item) => sum + item.dmg, 0);
+      const gearHp = gear.reduce((sum, item) => sum + item.hp, 0);
+      const armor = gear.reduce((sum, item) => sum + item.armor, 0) + state.upgrades.armor * 2;
+      const crit = Math.min(65, 5 + gear.reduce((sum, item) => sum + item.crit, 0));
+      const luck = state.upgrades.luck + gear.reduce((sum, item) => sum + item.luck, 0);
+      const goldBonus = state.upgrades.anvil * 8 + gear.reduce((sum, item) => sum + item.gold, 0);
+      const maxHp = 90 + state.level * 10 + gearHp + state.upgrades.armor * 18;
+      const click = 6 + state.level * 2 + state.upgrades.training * 5 + gearDmg;
+      const attackSpeed = .45 + state.upgrades.apprentice * .18;
+      return { gearDmg, armor, crit, luck, goldBonus, maxHp, click, attackSpeed, autoDps: click * attackSpeed };
+    }
+
+    function makeEnemy() {
+      const boss = state.stage % 5 === 0;
+      const scale = Math.pow(1.145, state.stage - 1);
+      const base = enemyBase[(state.stage - 1) % enemyBase.length];
+      const hp = Math.floor((boss ? 165 : 46) * scale + state.stage * (boss ? 22 : 7));
+      const damage = Math.floor((boss ? 13 : 5) * Math.pow(1.09, state.stage - 1));
+      return {
+        name: boss ? `Boss: ${base[0]} King` : base[0],
+        trait: boss ? "Trait: Boss - huge loot if you survive" : base[1],
+        hp,
+        maxHp: hp,
+        damage,
+        boss
+      };
+    }
+
+    function rollRarity() {
+      const s = stats();
+      const luckBoost = Math.min(24, s.luck * 2);
+      const table = rarities.map((r, i) => ({
+        ...r,
+        chance: i === 0 ? Math.max(20, r.chance - luckBoost) : r.chance + luckBoost / (rarities.length - 1)
+      }));
+      let roll = Math.random() * table.reduce((sum, r) => sum + r.chance, 0);
+      for (const rarity of table) {
+        roll -= rarity.chance;
+        if (roll <= 0) return rarity;
+      }
+      return table[0];
+    }
+
+    function forgeGear(slot, paid = true) {
+      const cost = forgeCost(slot);
+      if (paid && (state.gold < cost.gold || state.ore < cost.ore)) return toast("You need more gold or ore.");
+      if (paid) {
+        state.gold -= cost.gold;
+        state.ore -= cost.ore;
+      }
+
+      const rarity = rollRarity();
+      const tier = Math.max(1, Math.floor(state.stage / 2));
+      const level = Math.max(1, tier + Math.floor(Math.random() * 3));
+      const power = Math.ceil(level * rarity.mult);
+      const prefixes = {
+        Common: ["Iron", "Plain", "Sturdy"],
+        Rare: ["Sapphire", "Quick", "Reinforced"],
+        Epic: ["Void", "Storm", "Runed"],
+        Legendary: ["Dragon", "Solar", "Royal"],
+        Mythic: ["Overforged", "Godspark", "Worldsplitter"]
+      };
+      const item = {
+        slot,
+        name: `${pick(prefixes[rarity.name])} ${slotNames[slot]}`,
+        rarity: rarity.name,
+        rarityClass: rarity.class,
+        level,
+        dmg: slot === "weapon" ? power * 4 : Math.floor(power * (slot === "gloves" ? 1.6 : .8)),
+        hp: slot === "chest" || slot === "helmet" || slot === "boots" ? power * 9 : Math.floor(power * 2),
+        armor: slot === "chest" ? power * 2 : slot === "helmet" || slot === "boots" ? power : 0,
+        crit: slot === "weapon" || slot === "ring" || slot === "gloves" ? Math.floor(power * .9) : 0,
+        gold: slot === "ring" || rarity.name === "Legendary" || rarity.name === "Mythic" ? Math.floor(power * 1.5) : 0,
+        luck: slot === "ring" || rarity.name === "Mythic" ? Math.max(1, Math.floor(power / 2)) : 0
+      };
+      state.gear[slot] = item;
+      state.heroHp = Math.min(stats().maxHp, state.heroHp + item.hp);
+      addLog(`Forged <span class="${item.rarityClass}">${item.rarity} ${slotNames[slot]}</span>: ${item.name}.`);
+      toast(`${item.rarity} ${slotNames[slot]} forged.`);
+      dirty = true;
+      render();
+    }
+
+    function forgeCost(slot) {
+      const level = state.gear[slot]?.level || 1;
+      return {
+        gold: Math.floor(42 * Math.pow(1.16, level + state.stage * .55)),
+        ore: Math.floor(8 + level * 3 + state.stage * 1.6)
+      };
+    }
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function attack(mult = 1, fromAuto = false) {
+      if (state.heroHp <= 0) return;
+      const s = stats();
+      const crit = Math.random() * 100 < s.crit;
+      const damage = Math.max(1, Math.floor(s.click * mult * (crit ? 2.25 : 1) * (0.9 + Math.random() * .22)));
+      state.enemy.hp = Math.max(0, state.enemy.hp - damage);
+      $("enemySprite").classList.remove("hit");
+      void $("enemySprite").offsetWidth;
+      $("enemySprite").classList.add("hit");
+      if (!fromAuto) floatText(damage, crit ? "CRIT" : "");
+      if (state.enemy.hp <= 0) defeatEnemy();
+      dirty = true;
+      render();
+    }
+
+    function enemyHit() {
+      if (state.enemy.hp <= 0 || state.heroHp <= 0) return;
+      const s = stats();
+      const damage = Math.max(1, Math.floor(state.enemy.damage - s.armor * .55));
+      state.heroHp = Math.max(0, state.heroHp - damage);
+      $("heroSprite").classList.remove("hit");
+      void $("heroSprite").offsetWidth;
+      $("heroSprite").classList.add("hit");
+      if (state.heroHp <= 0) {
+        const lost = Math.floor(state.gold * .08);
+        state.gold -= lost;
+        state.heroHp = Math.ceil(s.maxHp * .55);
+        state.stage = Math.max(1, state.stage - 1);
+        state.enemy = makeEnemy();
+        addLog(`You got knocked out and dropped ${fmt(lost)} gold. Back to stage ${state.stage}.`);
+        toast("Knocked out. Your gear dragged you back up.");
+      }
+      dirty = true;
+      render();
+    }
+
+    function defeatEnemy() {
+      const s = stats();
+      const boss = state.enemy.boss;
+      const gold = Math.floor((boss ? 78 : 21) * Math.pow(1.13, state.stage) * (1 + s.goldBonus / 100));
+      const ore = Math.floor((boss ? 20 : 5) + state.stage * (boss ? 1.4 : .45));
+      const gems = boss ? 1 + Math.floor(state.stage / 15) : (Math.random() < .03 + s.luck * .003 ? 1 : 0);
+      const xp = Math.floor((boss ? 25 : 8) + state.stage * 2);
+      state.gold += gold;
+      state.ore += ore;
+      state.gems += gems;
+      state.xp += xp;
+      state.kills++;
+      if (boss) state.bossKills++;
+
+      addLog(`Defeated ${state.enemy.name}. +${fmt(gold)} gold, +${fmt(ore)} ore, +${xp} XP${gems ? `, +${gems} gem` : ""}.`);
+      if (boss) banner("Boss Broken", "The forge eats another crown.");
+      while (state.xp >= xpNeed()) {
+        state.xp -= xpNeed();
+        state.level++;
+        state.heroHp = stats().maxHp;
+        addLog(`Level up! You are now level ${state.level}.`);
+      }
+
+      if (Math.random() < .09 + s.luck * .005 || boss) forgeGear(pick(slots), false);
+      if (!state.farm) state.stage++;
+      state.enemy = makeEnemy();
+      dirty = true;
+    }
+
+    function xpNeed() {
+      return Math.floor(30 * Math.pow(1.18, state.level - 1));
+    }
+
+    function buyUpgrade(key) {
+      const prices = upgradePrices();
+      const item = prices[key];
+      if (state.gold < item.gold || state.ore < item.ore || state.gems < item.gems) {
+        toast("Not enough resources.");
+        return;
+      }
+      state.gold -= item.gold;
+      state.ore -= item.ore;
+      state.gems -= item.gems;
+      state.upgrades[key]++;
+      if (key === "armor") state.heroHp = Math.min(stats().maxHp, state.heroHp + 20);
+      addLog(`Bought ${item.name} rank ${state.upgrades[key]}.`);
+      dirty = true;
+      render();
+    }
+
+    function upgradePrices() {
+      const u = state.upgrades;
+      return {
+        training: {
+          name: "Sword Training",
+          desc: "+5 click damage per rank.",
+          gold: Math.floor(35 * Math.pow(1.35, u.training)),
+          ore: Math.floor(2 + u.training * 2),
+          gems: 0
+        },
+        anvil: {
+          name: "Greedy Anvil",
+          desc: "+8% gold from every fight.",
+          gold: Math.floor(70 * Math.pow(1.42, u.anvil)),
+          ore: Math.floor(10 + u.anvil * 4),
+          gems: 0
+        },
+        armor: {
+          name: "Tempered Armor",
+          desc: "+armor and max HP.",
+          gold: Math.floor(85 * Math.pow(1.4, u.armor)),
+          ore: Math.floor(12 + u.armor * 5),
+          gems: 0
+        },
+        luck: {
+          name: "Lucky Hammer",
+          desc: "Better odds for rare gear.",
+          gold: Math.floor(140 * Math.pow(1.55, u.luck)),
+          ore: Math.floor(18 + u.luck * 7),
+          gems: Math.floor(u.luck / 4)
+        },
+        apprentice: {
+          name: "Apprentice",
+          desc: "Adds automatic attacks.",
+          gold: Math.floor(220 * Math.pow(1.5, u.apprentice)),
+          ore: Math.floor(25 + u.apprentice * 8),
+          gems: Math.floor(u.apprentice / 3)
+        }
+      };
+    }
+
+    function usePotion() {
+      if (state.potions <= 0) return toast("No potions left.");
+      const s = stats();
+      if (state.heroHp >= s.maxHp) return toast("Already full HP.");
+      state.potions--;
+      state.heroHp = Math.min(s.maxHp, state.heroHp + Math.floor(s.maxHp * .48));
+      addLog("Used a potion.");
+      dirty = true;
+      render();
+    }
+
+    function overforge() {
+      if (state.overforgeCooldown > 0) return toast("Overforge is still cooling down.");
+      state.overforgeCooldown = 12;
+      attack(5.5);
+      addLog("Overforge strike unleashed.");
+      banner("Overforge", "A very reasonable amount of violence.");
+    }
+
+    function advance() {
+      state.stage++;
+      state.enemy = makeEnemy();
+      addLog(`Advanced to stage ${state.stage}.`);
+      dirty = true;
+      render();
+    }
+
+    function render() {
+      const s = stats();
+      state.heroHp = Math.min(state.heroHp, s.maxHp);
+      $("gold").textContent = fmt(state.gold);
+      $("ore").textContent = fmt(state.ore);
+      $("gems").textContent = fmt(state.gems);
+      $("stage").textContent = state.stage;
+      $("level").textContent = state.level;
+      $("autoDps").textContent = fmt(s.autoDps);
+      $("heroTitle").textContent = heroTitle();
+
+      $("heroHpText").textContent = `${fmt(state.heroHp)} / ${fmt(s.maxHp)}`;
+      $("heroHpBar").style.width = `${Math.max(0, state.heroHp / s.maxHp * 100)}%`;
+      $("xpText").textContent = `${fmt(state.xp)} / ${fmt(xpNeed())}`;
+      $("xpBar").style.width = `${Math.max(0, state.xp / xpNeed() * 100)}%`;
+      $("enemyName").textContent = state.enemy.name;
+      $("enemyPower").textContent = state.enemy.damage;
+      $("enemyHpText").textContent = `${fmt(state.enemy.hp)} / ${fmt(state.enemy.maxHp)}`;
+      $("enemyHpBar").style.width = `${Math.max(0, state.enemy.hp / state.enemy.maxHp * 100)}%`;
+      $("enemyTrait").textContent = state.enemy.trait;
+      $("bossTag").textContent = state.enemy.boss ? "BOSS" : "";
+      $("enemySide").classList.toggle("boss", state.enemy.boss);
+      $("farmBtn").textContent = state.farm ? "Farming: On" : "Farm Mode";
+      $("potionBtn").textContent = `Potion (${state.potions})`;
+      $("skillBtn").textContent = state.overforgeCooldown > 0 ? `Overforge ${state.overforgeCooldown.toFixed(0)}s` : "Overforge";
+      $("skillBtn").disabled = state.overforgeCooldown > 0;
+
+      $("clickDamage").textContent = fmt(s.click);
+      $("attackSpeed").textContent = `${s.attackSpeed.toFixed(2)}/s`;
+      $("armor").textContent = fmt(s.armor);
+      $("crit").textContent = `${Math.floor(s.crit)}%`;
+      $("goldBonus").textContent = `${Math.floor(s.goldBonus)}%`;
+      $("luck").textContent = fmt(s.luck);
+
+      renderGear();
+      renderShop();
+      renderQuests();
+    }
+
+    function heroTitle() {
+      if (state.bossKills >= 12) return "Walking Arsenal";
+      if (state.bossKills >= 6) return "Crownbreaker";
+      if (state.level >= 15) return "Overforged Hero";
+      if (state.level >= 8) return "Gear Carried Hero";
+      return "Blacksmith Hero";
+    }
+
+    function renderGear() {
+      $("gearList").innerHTML = slots.map(slot => {
+        const item = state.gear[slot];
+        const cost = forgeCost(slot);
+        return `
+          <div class="item">
+            <div>
+              <h3><span class="${item.rarityClass}">${item.rarity}</span> ${slotNames[slot]} <span class="small">Lv ${item.level}</span></h3>
+              <p class="gear-name">${item.name}</p>
+              <p>DMG ${fmt(item.dmg)} | HP ${fmt(item.hp)} | Armor ${fmt(item.armor)} | Crit ${fmt(item.crit)}% | Gold ${fmt(item.gold)}% | Luck ${fmt(item.luck)}</p>
+              <p class="cost">Forge cost: ${fmt(cost.gold)} gold, ${fmt(cost.ore)} ore</p>
+            </div>
+            <button onclick="forgeGear('${slot}')">Forge</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderShop() {
+      const prices = upgradePrices();
+      $("shop").innerHTML = Object.entries(prices).map(([key, item]) => `
+        <div class="item">
+          <div>
+            <h3>${item.name} <span class="small">Rank ${state.upgrades[key]}</span></h3>
+            <p>${item.desc}</p>
+            <p class="cost">Cost: ${fmt(item.gold)} gold, ${fmt(item.ore)} ore${item.gems ? `, ${fmt(item.gems)} gems` : ""}</p>
+          </div>
+          <button onclick="buyUpgrade('${key}')">Buy</button>
+        </div>
+      `).join("");
+    }
+
+    function renderQuests() {
+      const qs = [
+        ["Stage 10", state.stage, 10, "Reach stage 10 to prove the sword is pointed the right way."],
+        ["50 Kills", state.kills, 50, "Defeat 50 enemies."],
+        ["3 Bosses", state.bossKills, 3, "Break 3 boss crowns."],
+        ["Level 12", state.level, 12, "Reach hero level 12."],
+        ["Mythic Dream", Object.values(state.gear).filter(g => g.rarity === "Mythic").length, 1, "Forge or loot a Mythic item."]
+      ];
+      $("quests").innerHTML = qs.map(([name, have, need, desc]) => {
+        const done = have >= need;
+        return `
+          <div class="item">
+            <div>
+              <h3>${done ? "Done: " : ""}${name}</h3>
+              <p>${desc}</p>
+              <p class="cost">${fmt(Math.min(have, need))} / ${fmt(need)}</p>
+            </div>
+            <span class="pill"><strong>${done ? "Claimed" : "Active"}</strong></span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function addLog(message) {
+      const line = document.createElement("div");
+      line.className = "log-line";
+      line.innerHTML = message;
+      $("log").prepend(line);
+      while ($("log").children.length > 45) $("log").lastChild.remove();
+    }
+
+    function toast(message) {
+      const box = document.createElement("div");
+      box.textContent = message;
+      $("toast").appendChild(box);
+      setTimeout(() => box.remove(), 2600);
+    }
+
+    function banner(title, text) {
+      $("banner").innerHTML = `<strong>${title}</strong><span>${text}</span>`;
+      $("banner").classList.remove("show");
+      void $("banner").offsetWidth;
+      $("banner").classList.add("show");
+    }
+
+    function floatText(amount, tag) {
+      const el = document.createElement("div");
+      el.className = "floating";
+      el.textContent = tag ? `${tag} ${fmt(amount)}` : fmt(amount);
+      const rect = $("enemySprite").getBoundingClientRect();
+      el.style.left = `${rect.left + rect.width * (.32 + Math.random() * .36)}px`;
+      el.style.top = `${rect.top + rect.height * .28}px`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    function tick() {
+      const now = Date.now();
+      const dt = Math.min(1.2, (now - state.lastTick) / 1000);
+      state.lastTick = now;
+      const s = stats();
+      if (s.autoDps > 0 && state.heroHp > 0) attack(dt * s.attackSpeed, true);
+      if (Math.random() < dt * .42) enemyHit();
+      if (state.overforgeCooldown > 0) state.overforgeCooldown = Math.max(0, state.overforgeCooldown - dt);
+      if (dirty) save();
+      render();
+    }
+
+    document.querySelectorAll(".tabs button").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        button.classList.add("active");
+        $(button.dataset.tab).classList.add("active");
+      });
+    });
+
+    $("attackBtn").addEventListener("click", () => attack(1));
+    $("skillBtn").addEventListener("click", overforge);
+    $("potionBtn").addEventListener("click", usePotion);
+    $("advanceBtn").addEventListener("click", advance);
+    $("farmBtn").addEventListener("click", () => {
+      state.farm = !state.farm;
+      addLog(state.farm ? "Farm mode on. Stage will stay put." : "Farm mode off. Wins advance stages.");
+      dirty = true;
+      render();
+    });
+    $("resetBtn").addEventListener("click", () => {
+      if (!confirm("Reset your Overforged Hero save?")) return;
+      localStorage.removeItem(saveKey);
+      state = defaultState();
+      state.enemy = makeEnemy();
+      $("log").innerHTML = "";
+      addLog("Save reset.");
+      dirty = true;
+      render();
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        attack(1);
+      }
+      if (event.key.toLowerCase() === "q") overforge();
+      if (event.key.toLowerCase() === "e") usePotion();
+    });
+
+    addLog("Welcome to Overforged Hero. Hit Space to strike, Q to overforge, E to heal.");
+    render();
+    save();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
